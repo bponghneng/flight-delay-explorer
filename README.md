@@ -27,3 +27,20 @@ ChatGPT came back with a similar list of projects that was just what I was looki
 ## Work-in-Progress
 
 This version of the README marks the beginning state of the project. My intention is to build all of the projects using techniques of agentic engineering I have studied in recent months. No doubt I _could_ one-shot vibe code all of the projects using Claude with only a couple more prompts to refine the specs for each. But I want skills that work for my day-to-day use among an enterprise-level codebase with legacy code, tech debt and high sensitivity to breaking changes.
+
+### June 6, 2025
+
+Today I focused on collaborating with Claude to build a detailed implementation plan for the first milestone of the project. This represents my first experience co-creating a specification document with an AI assistant rather than writing it entirely by hand.
+
+I encountered some interesting challenges with prompt engineering. Initially, Claude would generate code for the entire project at once, which wasn't my intention. I wanted to approach this methodically using Test-Driven Development (TDD) to learn Python programming properly and keep each increment as lean as possible. This required more specific prompting to limit the scope and emphasize the TDD approach in the `specs/core-package-structure.md` file.
+
+The implementation plan now details a phased approach with clear steps:
+1. Test-Driven CLI Foundation
+2. Core Package Architecture
+3. API Client Setup
+4. Data Parser Implementation
+
+Each phase follows the strict TDD cycle: write test, verify test fails, implement solution, verify test passes.
+
+Next steps include executing the spec, fixing any issues that arise and getting the generated code into a clean state before moving on to build the specification for the next milestone.
+

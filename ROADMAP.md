@@ -2,8 +2,8 @@
 
 ## 📊 Project Overview
 **Name**: Flight Delay Explorer CLI  
-**Tech Stack**: Python, BTS API, `pandas`, `matplotlib`, `requests`, `typer`, `datetime`, `pytest`, `pytest-cov`, `black`, `ruff`, `mypy`, local CSV or SQLite  
-**Function**: A command-line tool that queries and summarizes flight delay data for a given airport, carrier, or time period. Includes test coverage and logging.  
+**Tech Stack**: Python, AviationStack `/v1/flights` API, `pandas`, `matplotlib`, `requests`, `typer`, `datetime`, `pytest`, `pytest-cov`, `black`, `ruff`, `mypy`, local CSV or SQLite  
+**Function**: A command-line tool that queries and summarizes flight delay data for a given flight date. Includes test coverage and logging.  
 **Demonstrates**: Python fundamentals, CLI tooling, API integration, data parsing and transformation
 
 ---
@@ -27,46 +27,65 @@ Create a well-organized project layout:
 **Project Structure:**
 ```
 flight-delay-explorer/
-├── flight_delay_explorer/     # Main package (source code)
-│   ├── __init__.py           # Makes this directory a Python package
-│   ├── cli.py                # Command-line interface
-│   ├── api_client.py         # Talks to the BTS API
-│   ├── data_parser.py        # Processes flight data
-│   ├── models.py             # Data structures/classes
-│   ├── utils.py              # Helper functions
-│   └── config.py             # Settings and configuration
-├── tests/                    # All test files
-│   ├── __init__.py          # Makes tests a package too
-│   ├── test_data_parser.py  # Tests for data_parser.py
-│   ├── test_api_client.py   # Tests for api_client.py
-│   └── fixtures/            # Sample data for testing
-├── docs/                    # Documentation
-├── data/                    # Local data storage
-│   ├── raw/                 # Raw API responses
-│   └── processed/           # Cleaned CSV files
-├── requirements.txt         # Libraries your project needs
-├── requirements-dev.txt     # Development tools
-├── pyproject.toml          # Modern Python configuration
-├── .gitignore              # Files Git should ignore
-├── README.md               # Project description
-└── .env.example            # Example environment variables
+├── .claude/                        # Claude AI assistant configuration
+│   └── commands/                   # Custom Claude commands
+│       └── context_prime.md        # Context priming command
+├── .git/                           # Git repository data
+├── .gitignore                      # Files Git should ignore
+├── .python-version                 # Python version specification
+├── .vscode/                        # VS Code editor configuration
+├── CLAUDE.md                       # Claude AI assistant documentation
+├── LICENSE                         # Project license file
+├── README.md                       # Project description
+├── ROADMAP.md                      # This project roadmap file
+├── data/                           # Local data storage
+│   └── 2025-06-07.json             # Sample flight data
+├── main.py                         # Main entry point script
+├── pyproject.toml                  # Modern Python configuration
+├── specs/                          # Project specifications
+│   └── core-package-structure.md   # Package structure specification
+├── src/                            # Source code directory
+│   └── flight_delay_explorer/      # Main package (source code)
+│       ├── __init__.py             # Makes this directory a Python package
+│       ├── cli.py                  # Command-line interface
+│       ├── config.py               # Configuration management
+│       ├── models.py               # Data models
+│       ├── api/                    # API interaction modules
+│       │   └── client.py           # AviationStack API client
+│       ├── parsers/                # Data parsing modules
+│       │   └── data_parser.py      # Flight data parser
+│       └── utils/                  # Utility modules
+│           └── logging.py          # Logging utilities
+├── tests/                          # Test directory
+│   ├── __init__.py                 # Makes this directory a Python package
+│   ├── test_cli.py                 # Tests for CLI
+│   ├── test_models.py              # Tests for data models
+│   ├── test_config.py              # Tests for configuration
+│   ├── test_api_client.py          # Tests for API client
+│   ├── test_logging.py             # Tests for logging utilities
+│   └── fixtures/                   # Test fixtures
+│       └── sample_flight_data.json # Sample data for testing
+└── uv.lock                         # UV package manager lock file
 ```
 
 #### 2. Python Environment Management
-- Set up virtual environment (using `venv`)
-- Create `requirements.txt` for runtime dependencies
-- Create `requirements-dev.txt` for development tools
-- Consider using `pyproject.toml` for modern Python packaging
+- Set up Python environment using `uv` package manager
+- Configure dependencies in `pyproject.toml` for modern Python packaging
+- Use `uv.lock` for dependency locking and reproducible environments
+- Configure development dependencies in `pyproject.toml` under `[project.optional-dependencies]`
 
 #### 3. Core Package Structure
-Design your main package with these modules:
+Design your main package with these modules and directories:
 - `__init__.py` for package initialization
 - `cli.py` for command-line interface (using Typer)
-- `api_client.py` for BTS API interactions
-- `data_parser.py` for data processing and transformation
 - `models.py` for data models/classes
-- `utils.py` for utility functions
 - `config.py` for configuration management
+- `api/` directory for API interactions:
+  - `client.py` for AviationStack API client
+- `parsers/` directory for data processing:
+  - `data_parser.py` for data processing and transformation
+- `utils/` directory for utility functions:
+  - `logging.py` for logging configuration and utilities
 
 #### 4. Development Tools Configuration
 Set up configuration files for:
@@ -99,13 +118,13 @@ Create the foundational data structures and configuration management system.
 #### 1. Data Models Design
 Define classes/dataclasses for:
 - Flight delay records (structured data representation)
-- API response structures (what we get from BTS API)
+- API response structures (what we get from AviationStack API)
 - Configuration settings (user preferences, API keys)
 - Query parameters (search criteria for flights)
 
 #### 2. Configuration Management
 - Environment variables handling (API keys, secrets)
-- API keys and endpoints (BTS API configuration)
+- API keys and endpoints (AviationStack API configuration)
 - Default settings and user preferences
 - Logging configuration (debugging and monitoring)
 
@@ -130,7 +149,7 @@ Build the core functionality to fetch and process flight delay data.
 
 ### 📋 Tasks
 
-#### 1. BTS API Client
+#### 1. AviationStack API Client
 - HTTP request handling with `requests` library
 - Authentication and rate limiting (respecting API limits)
 - Error handling for network issues (timeouts, connection errors)
