@@ -5,9 +5,12 @@
 #     import typer
 
 
-def test_hello():
-    from flight_delay_explorer.main import main
+from typer.testing import CliRunner
+from flight_delay_explorer.main import app
 
-    result = main()
-    assert isinstance(result, str)
-    assert "hello" in result.lower()
+runner = CliRunner()
+
+def test_hello():
+    result = runner.invoke(app, ["hello"])
+    assert result.exit_code == 0
+    assert "hello" in result.output.lower()
