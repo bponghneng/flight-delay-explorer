@@ -1,10 +1,3 @@
-# def test_imports():
-#     import pandas
-#     import matplotlib
-#     import argparse
-#     import typer
-
-
 from typer.testing import CliRunner
 from flight_delay_explorer.main import app
 

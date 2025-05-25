@@ -23,6 +23,16 @@ dev = [
     "mypy"
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+packages = ["src/flight_delay_explorer"]
+
+[project.scripts]
+main = "flight_delay_explorer.main:main"
+
 [tool.black]
 line-length = 88
 target-version = ['py38']
