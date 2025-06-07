@@ -1,11 +1,12 @@
 """Data models for Flight Delay Explorer."""
+
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class DelayCategory(Enum):
     """Flight delay categories."""
+
     CANCELLED = "cancelled"
     DIVERTED = "diverted"
     ON_TIME = "on time"
@@ -17,6 +18,7 @@ class DelayCategory(Enum):
 @dataclass
 class FlightRecord:
     """Represents a single flight record with delay information."""
+
     arrival_delay: int
     destination_icao: str
     flight_date: str
@@ -28,4 +30,5 @@ class FlightRecord:
 @dataclass
 class QueryParams:
     """Parameters for querying flight data."""
+
     flight_date: str
