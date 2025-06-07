@@ -1,0 +1,64 @@
+{
+  "data": [
+    {
+      "flight_date": "2024-01-01",
+      "flight_status": "landed",
+      "departure": {
+        "airport": "John F Kennedy International",
+        "iata": "JFK",
+        "icao": "KJFK",
+        "delay": 15
+      },
+      "arrival": {
+        "airport": "Los Angeles International",
+        "iata": "LAX", 
+        "icao": "KLAX",
+        "delay": 25
+      },
+      "flight": {
+        "iata": "AA123",
+        "icao": "AAL123"
+      }
+    },
+    {
+      "flight_date": "2024-01-01",
+      "flight_status": "cancelled",
+      "departure": {
+        "airport": "Chicago O'Hare International",
+        "iata": "ORD",
+        "icao": "KORD",
+        "delay": null
+      },
+      "arrival": {
+        "airport": "Denver International",
+        "iata": "DEN",
+        "icao": "KDEN", 
+        "delay": null
+      },
+      "flight": {
+        "iata": "UA456",
+        "icao": "UAL456"
+      }
+    },
+    {
+      "flight_date": "2024-01-01",
+      "flight_status": "landed",
+      "departure": {
+        "airport": "Miami International",
+        "iata": "MIA",
+        "icao": "KMIA",
+        "delay": 5
+      },
+      "arrival": {
+        "airport": "Atlanta Hartsfield-Jackson International",
+        "iata": "ATL",
+        "icao": "KATL",
+        "delay": 10
+      },
+      "flight": {
+        "iata": "DL789",
+        "icao": "DAL789"
+      }
+    }
+  ]
+}
