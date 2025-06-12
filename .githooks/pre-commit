@@ -1,0 +1,80 @@
+#!/bin/bash
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Check if uv is available
+if ! command -v uv &> /dev/null; then
+    echo "Error: uv is not installed. Please install uv to run development tools."
+    exit 1
+fi
+
+# Ruff linting with fixes
+echo "Running ruff check..."
+uv run ruff check --fix --exit-non-zero-on-fix
+
+# Ruff formatting
+echo "Running ruff format..."
+uv run ruff format
+
+# MyPy type checking
+echo "Running mypy type checking..."
+uv run mypy src/ --strict
+
+# Pre-commit hooks utilities
+echo "Running file integrity checks..."
+
+# End of file fixer - only process staged Python files
+git diff --cached --name-only --diff-filter=ACMR | grep '\.py$' | while read file; do
+    if [ -f "$file" ]; then
+        if [ ! -s "$file" ] || [ "$(tail -c1 "$file" | wc -l)" -eq 0 ]; then
+            echo "Adding newline to end of $file"
+            echo >> "$file"
+            git add "$file"  # Re-stage the modified file
+        fi
+    fi
+done
+
+# Check YAML files
+find . -name "*.yaml" -o -name "*.yml" | xargs -r python -c "
+import yaml, sys
+for f in sys.argv[1:]:
+    try:
+        with open(f) as file:
+            yaml.safe_load(file)
+    except Exception as e:
+        print(f'YAML error in {f}: {e}')
+        sys.exit(1)
+"
+
+# Check TOML files
+find . -name "*.toml" | xargs -r python -c "
+import tomllib, sys
+for f in sys.argv[1:]:
+    try:
+        with open(f, 'rb') as file:
+            tomllib.load(file)
+    except Exception as e:
+        print(f'TOML error in {f}: {e}')
+        sys.exit(1)
+"
+
+# Check for large files (>500KB)
+find src/ tests/ -size +500k -not -path './.git/*' | head -10 | while read file; do
+    echo "⚠️ Warning: Large file detected: $file"
+done
+
+# Check for merge conflict markers
+if grep -r "<<<<<<< \|======= \|>>>>>>> " --include="*.py" --include="*.yaml" --include="*.toml" --include="*.md" src/ tests/; then
+    echo "❌ Error: Merge conflict markers found"
+    exit 1
+fi
+
+# Check for debug statements
+if grep -r "pdb\.set_trace\|breakpoint\|^[^#]*print(" --include="*.py" src/ tests/ | grep -v "console\.print"; then
+    echo "❌ Error: Debug statements found in source code"
+    exit 1
+fi
+
+echo "✅ All pre-commit checks passed!"

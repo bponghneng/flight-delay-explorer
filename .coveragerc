@@ -1,6 +1,6 @@
 [run]
 source = src/flight_delay_explorer
-omit = 
+omit =
     tests/*
     */test_*
     */__pycache__/*

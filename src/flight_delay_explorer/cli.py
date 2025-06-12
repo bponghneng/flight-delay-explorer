@@ -15,8 +15,11 @@ from .config import Settings
 from .models import DelayCategory, FlightRecord, QueryParams
 from .utils.logging import setup_logger
 
-app = typer.Typer(
-    help="Flight Delay Explorer - Process airline on-time performance data"
+# Type-annotated Typer app
+app: typer.Typer = typer.Typer(
+    help="Flight Delay Explorer - Process airline on-time performance data",
+    no_args_is_help=True,
+    add_completion=False,
 )
 console = Console()
 
@@ -35,7 +38,7 @@ def fetch(
     show_progress: bool = typer.Option(
         True, "--show-progress/--no-progress", help="Show progress indicators"
     ),
-):
+) -> None:
     """Fetch flight delay data for a specific date."""
     # Set up logging
     log_level_map = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40}
@@ -57,7 +60,7 @@ def fetch(
 
     # Initialize settings
     try:
-        settings = Settings()  # type: ignore # Settings loads from environment variables
+        settings = Settings()  # Settings loads from environment variables
         logger.debug("Settings loaded successfully")
     except Exception as e:
         error_msg = f"Configuration error: {e}"
@@ -197,7 +200,7 @@ def fetch(
         logger.info(f"Summary: {summary_stats}")
 
 
-def _generate_summary_stats(records: list[FlightRecord]) -> dict:
+def _generate_summary_stats(records: list[FlightRecord]) -> dict[str, float]:
     """Generate summary statistics for flight records."""
     total = len(records)
     on_time = sum(1 for r in records if r.flight_status == DelayCategory.ON_TIME)

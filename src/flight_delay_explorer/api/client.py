@@ -2,7 +2,7 @@
 
 import logging
 import time
-from typing import Optional
+from typing import Any, Optional, Union
 
 import httpx
 
@@ -39,9 +39,11 @@ class AviationStackClient:
             httpx.HTTPError: If API request fails after retries
         """
         url = f"{self._settings.base_url}/flights"
-        query_params = {
+        query_params: dict[str, Union[str, int]] = {
             "access_key": self._settings.access_key,
             "flight_date": params.flight_date,
+            # Hardcoded to filter flights only to those with arrival delay
+            "min_delay_arr": 1,
         }
 
         self._logger.info(f"Fetching flights for date: {params.flight_date}")
@@ -94,7 +96,7 @@ class AviationStackClient:
         # This should never be reached due to the retry logic
         raise RuntimeError("Unexpected end of retry loop")
 
-    def _parse_response(self, data: dict) -> list[FlightRecord]:
+    def _parse_response(self, data: dict[str, Any]) -> list[FlightRecord]:
         """Parse API response into FlightRecord objects.
 
         Args:
@@ -117,7 +119,7 @@ class AviationStackClient:
         self._logger.debug(f"Successfully parsed {len(records)} flight records")
         return records
 
-    def _parse_flight_record(self, flight_data: dict) -> FlightRecord:
+    def _parse_flight_record(self, flight_data: dict[str, Any]) -> FlightRecord:
         """Parse individual flight data into FlightRecord.
 
         Args:

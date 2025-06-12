@@ -7,7 +7,7 @@ Please provide a clear and concise description of the changes in this PR.
 ### What type of change is this?
 
 - [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)  
+- [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] Documentation update
 - [ ] Code refactoring (no functional changes)
@@ -26,9 +26,9 @@ Please link to the issue this PR addresses:
 
 Please describe the specific changes made in this PR:
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 
@@ -51,7 +51,7 @@ Please describe how you tested these changes:
 Please confirm that your changes meet our quality standards:
 
 ### Code Quality
-- [ ] Code follows the project's style guidelines (Black formatting)
+- [ ] Code follows the project's style guidelines (Ruff formatting)
 - [ ] No linting errors (Ruff passes)
 - [ ] Type checking passes (MyPy)
 - [ ] Code is self-documenting with clear variable names
@@ -77,8 +77,8 @@ Please confirm that your changes meet our quality standards:
 
 If this is a breaking change, please describe the impact and migration path:
 
-- 
-- 
+-
+-
 
 ## Screenshots/Recordings
 

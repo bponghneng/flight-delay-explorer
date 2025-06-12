@@ -30,7 +30,7 @@ def test_fetch_command_displays_colored_table(mock_get, sample_flight_data):
     mock_get.return_value = mock_response
 
     # Set environment variable for API key
-    with patch.dict("os.environ", {"FLIGHT_ACCESS_KEY": "test-key"}):
+    with patch.dict("os.environ", {"AVIATIONSTACK_ACCESS_KEY": "test-key"}):
         result = runner.invoke(app, ["--flight-date", "2024-01-01"])
 
     # Verify command executed successfully

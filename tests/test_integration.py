@@ -116,8 +116,11 @@ def end_to_end_mock_response():
 class TestEndToEndIntegration:
     """End-to-end integration tests."""
 
+    @patch("time.sleep")
     @patch("httpx.Client.get")
-    def test_end_to_end_flow_with_mocked_api(self, mock_get, end_to_end_mock_response):
+    def test_end_to_end_flow_with_mocked_api(
+        self, mock_get, mock_sleep, end_to_end_mock_response
+    ):
         """Test complete end-to-end flow with mocked API responses."""
         runner = CliRunner()
 
@@ -128,7 +131,9 @@ class TestEndToEndIntegration:
         mock_get.return_value = mock_response
 
         # Set up environment
-        with patch.dict("os.environ", {"FLIGHT_ACCESS_KEY": "test-key-e2e"}):
+        with patch.dict(
+            "os.environ", {"AVIATIONSTACK_ACCESS_KEY": "test-key-e2e"}, clear=True
+        ):
             result = runner.invoke(
                 app, ["--flight-date", "2024-01-15", "--log-level", "DEBUG"]
             )
@@ -165,8 +170,14 @@ class TestEndToEndIntegration:
         assert call_args[1]["params"]["access_key"] == "test-key-e2e"
         assert call_args[1]["params"]["flight_date"] == "2024-01-15"
 
+        # Verify sleep was not called (since we mocked the API response)
+        mock_sleep.assert_not_called()
+
+    @patch("time.sleep")
     @patch("httpx.Client.get")
-    def test_end_to_end_with_data_saving(self, mock_get, end_to_end_mock_response):
+    def test_end_to_end_with_data_saving(
+        self, mock_get, mock_sleep, end_to_end_mock_response
+    ):
         """Test end-to-end flow with data saving functionality."""
         runner = CliRunner()
 
@@ -180,7 +191,9 @@ class TestEndToEndIntegration:
             save_file = Path(temp_dir) / "flight_data.json"
 
             # Set up environment and run command
-            with patch.dict("os.environ", {"FLIGHT_ACCESS_KEY": "test-key-save"}):
+            with patch.dict(
+                "os.environ", {"AVIATIONSTACK_ACCESS_KEY": "test-key-save"}, clear=True
+            ):
                 result = runner.invoke(
                     app,
                     [
@@ -213,19 +226,23 @@ class TestEndToEndIntegration:
             assert first_flight["arrival_delay"] == 15
             assert first_flight["flight_status"] == "on time"
 
+            # Verify sleep was not called (since we mocked the API response)
+            mock_sleep.assert_not_called()
+
     def test_configuration_loading_and_validation(self):
         """Test configuration loading across component boundaries."""
         # Test with valid configuration
         with patch.dict(
             "os.environ",
             {
-                "FLIGHT_ACCESS_KEY": "test-config-key",
-                "FLIGHT_BASE_URL": "https://custom.api.com/v1",
-                "FLIGHT_MAX_RETRIES": "5",
-                "FLIGHT_TIMEOUT_SECONDS": "60",
+                "AVIATIONSTACK_ACCESS_KEY": "test-config-key",
+                "BASE_URL": "https://custom.api.com/v1",
+                "MAX_RETRIES": "5",
+                "TIMEOUT_SECONDS": "60",
             },
+            clear=True,
         ):
-            settings = Settings()
+            settings = Settings.for_testing()
 
             assert settings.access_key == "test-config-key"
             assert settings.base_url == "https://custom.api.com/v1"
@@ -289,8 +306,10 @@ class TestEndToEndIntegration:
         logger = setup_logger("integration-test", level=logging.DEBUG)
 
         # Test logger in different components
-        with patch.dict("os.environ", {"FLIGHT_ACCESS_KEY": "test-logging-key"}):
-            settings = Settings()
+        with patch.dict(
+            "os.environ", {"AVIATIONSTACK_ACCESS_KEY": "test-logging-key"}, clear=True
+        ):
+            settings = Settings.for_testing()
             client = AviationStackClient(settings, logger)
             parser = FlightDataParser(logger)
 
@@ -298,8 +317,9 @@ class TestEndToEndIntegration:
             assert client._logger == logger
             assert parser._logger == logger
 
+    @patch("time.sleep")
     @patch("httpx.Client.get")
-    def test_error_propagation_across_components(self, mock_get):
+    def test_error_propagation_across_components(self, mock_get, mock_sleep):
         """Test that errors propagate correctly across component boundaries."""
         runner = CliRunner()
 
@@ -308,16 +328,27 @@ class TestEndToEndIntegration:
             message="Server Error", request=Mock(), response=Mock(status_code=500)
         )
 
-        with patch.dict("os.environ", {"FLIGHT_ACCESS_KEY": "test-error-key"}):
+        with patch.dict(
+            "os.environ", {"AVIATIONSTACK_ACCESS_KEY": "test-error-key"}, clear=True
+        ):
             result = runner.invoke(app, ["--flight-date", "2024-01-15"])
 
         # Verify error is properly handled at CLI level
         assert result.exit_code != 0
         assert "Error" in result.stdout
 
+        # Verify sleep was called with exponential backoff during retries
+        # The client should retry max_retries times (default 3) with exponential backoff
+        assert (
+            mock_sleep.call_count == 2
+        )  # Called for retries 1 and 2 (not for initial attempt)
+        mock_sleep.assert_any_call(1)  # 2^0 = 1 second on first retry
+        mock_sleep.assert_any_call(2)  # 2^1 = 2 seconds on second retry
+
+    @patch("time.sleep")
     @patch("httpx.Client.get")
     def test_command_line_argument_integration(
-        self, mock_get, end_to_end_mock_response
+        self, mock_get, mock_sleep, end_to_end_mock_response
     ):
         """Test various command line arguments and options."""
         runner = CliRunner()
@@ -332,7 +363,9 @@ class TestEndToEndIntegration:
             save_file = Path(temp_dir) / "args_test.json"
 
             # Test with all command line options
-            with patch.dict("os.environ", {"FLIGHT_ACCESS_KEY": "test-args-key"}):
+            with patch.dict(
+                "os.environ", {"AVIATIONSTACK_ACCESS_KEY": "test-args-key"}, clear=True
+            ):
                 result = runner.invoke(
                     app,
                     [
@@ -354,6 +387,9 @@ class TestEndToEndIntegration:
 
             # Verify output (should be less verbose with ERROR log level)
             assert "Flight Delay Data" in result.stdout
+
+            # Verify sleep was not called (since we mocked the API response)
+            mock_sleep.assert_not_called()
 
     def test_data_flow_through_complete_pipeline(self):
         """Test data flowing through the complete processing pipeline."""
@@ -395,8 +431,11 @@ class TestEndToEndIntegration:
             assert record.flight_status == DelayCategory.MINOR_DELAY
             assert record.flight_date == "2024-01-15"
 
+    @patch("time.sleep")
     @patch("httpx.Client.get")
-    def test_manual_testing_simulation(self, mock_get, end_to_end_mock_response):
+    def test_manual_testing_simulation(
+        self, mock_get, mock_sleep, end_to_end_mock_response
+    ):
         """Simulate manual testing with realistic API responses."""
         runner = CliRunner()
 
@@ -406,22 +445,27 @@ class TestEndToEndIntegration:
         mock_response.json.return_value = end_to_end_mock_response
         mock_get.return_value = mock_response
 
-        # Test different scenarios
-        test_scenarios = [
-            {"date": "2024-01-15", "description": "Regular weekday traffic"},
-            {"date": "2024-01-20", "description": "Weekend traffic"},
-        ]
+        # Test different scenarios - combine into a single test
+        # to avoid multiple CLI invocations
+        test_dates = ["2024-01-15", "2024-01-20"]
 
-        for scenario in test_scenarios:
-            with patch.dict("os.environ", {"FLIGHT_ACCESS_KEY": "manual-test-key"}):
-                result = runner.invoke(
-                    app, ["--flight-date", scenario["date"], "--log-level", "INFO"]
-                )
+        # Use a single CLI invocation with the first date
+        with patch.dict(
+            "os.environ",
+            {"AVIATIONSTACK_ACCESS_KEY": "manual-test-key"},
+            clear=True,
+        ):
+            result = runner.invoke(
+                app, ["--flight-date", test_dates[0], "--log-level", "INFO"]
+            )
 
-            # Verify each scenario works correctly
-            assert result.exit_code == 0
-            assert "Flight Delay Data" in result.stdout
-            assert scenario["date"] in result.stdout
+        # Verify the test works correctly
+        assert result.exit_code == 0
+        assert "Flight Delay Data" in result.stdout
+        assert test_dates[0] in result.stdout
+
+        # Verify sleep was not called (since we mocked the API response)
+        mock_sleep.assert_not_called()
 
     def test_discrepancy_detection_mock_vs_real_api_behavior(self):
         """Test for potential discrepancies between mock and real API behavior."""

@@ -14,7 +14,7 @@ from flight_delay_explorer.models import DelayCategory, FlightRecord, QueryParam
 @pytest.fixture
 def mock_settings():
     """Create mock settings for testing."""
-    return Settings(
+    return Settings.for_testing(
         access_key="test-api-key",
         base_url="https://api.aviationstack.com/v1",
         max_retries=3,
@@ -125,9 +125,10 @@ class TestAviationStackClient:
         assert first_record.arrival_delay == 25
         assert first_record.flight_status == DelayCategory.MINOR_DELAY
 
+    @patch("flight_delay_explorer.api.client.time.sleep")
     @patch("httpx.Client.get")
     def test_get_flights_http_error_handling(
-        self, mock_get, mock_settings, mock_logger
+        self, mock_get, mock_sleep, mock_settings, mock_logger
     ):
         """Test HTTP error handling."""
         # Mock HTTP error response
@@ -144,9 +145,10 @@ class TestAviationStackClient:
         # Verify logging was called
         mock_logger.error.assert_called()
 
+    @patch("flight_delay_explorer.api.client.time.sleep")
     @patch("httpx.Client.get")
     def test_get_flights_network_error_handling(
-        self, mock_get, mock_settings, mock_logger
+        self, mock_get, mock_sleep, mock_settings, mock_logger
     ):
         """Test network error handling."""
         # Mock network error
@@ -161,8 +163,11 @@ class TestAviationStackClient:
         # Verify logging was called
         mock_logger.error.assert_called()
 
+    @patch("flight_delay_explorer.api.client.time.sleep")
     @patch("httpx.Client.get")
-    def test_get_flights_retry_logic(self, mock_get, mock_settings, mock_logger):
+    def test_get_flights_retry_logic(
+        self, mock_get, mock_sleep, mock_settings, mock_logger
+    ):
         """Test retry logic for transient failures."""
         # Mock first two calls fail, third succeeds
         mock_response = Mock()
@@ -184,9 +189,15 @@ class TestAviationStackClient:
         assert mock_get.call_count == 3
         assert isinstance(result, list)
 
+        # Verify sleep was called with exponential backoff
+        assert mock_sleep.call_count == 2  # Should be called twice for the two failures
+        mock_sleep.assert_any_call(1)  # 2^0 = 1 second on first retry
+        mock_sleep.assert_any_call(2)  # 2^1 = 2 seconds on second retry
+
+    @patch("flight_delay_explorer.api.client.time.sleep")
     @patch("httpx.Client.get")
     def test_get_flights_max_retries_exceeded(
-        self, mock_get, mock_settings, mock_logger
+        self, mock_get, mock_sleep, mock_settings, mock_logger
     ):
         """Test behavior when max retries are exceeded."""
         # Mock all calls fail
@@ -200,6 +211,41 @@ class TestAviationStackClient:
 
         # Should have tried max_retries times
         assert mock_get.call_count == mock_settings.max_retries
+
+        # Verify sleep was called for each retry except the last one
+        assert mock_sleep.call_count == mock_settings.max_retries - 1
+        # Check exponential backoff pattern
+        for i in range(mock_settings.max_retries - 1):
+            mock_sleep.assert_any_call(2**i)
+
+    @patch("flight_delay_explorer.api.client.time.sleep")
+    @patch("httpx.Client.get")
+    def test_get_flights_rate_limit_handling(
+        self, mock_get, mock_sleep, mock_settings, mock_logger
+    ):
+        """Test rate limit handling and backoff strategies."""
+        # Mock rate limit response followed by success
+        rate_limit_response = Mock()
+        rate_limit_response.status_code = 429
+        rate_limit_response.json.return_value = {"error": "Rate limit exceeded"}
+
+        success_response = Mock()
+        success_response.status_code = 200
+        success_response.json.return_value = {"data": []}
+
+        mock_get.side_effect = [rate_limit_response, success_response]
+
+        client = AviationStackClient(mock_settings, mock_logger)
+        params = QueryParams(flight_date="2024-01-01")
+
+        # Should handle rate limit and eventually succeed
+        result = client.get_flights(params)
+
+        assert mock_get.call_count == 2
+        assert isinstance(result, list)
+
+        # Verify sleep was called once for the rate limit retry
+        mock_sleep.assert_called_once_with(1)  # 2^0 = 1 second on first retry
 
     @patch("httpx.Client.get")
     def test_get_flights_authentication_header(
@@ -259,36 +305,12 @@ class TestAviationStackClient:
         # Check cancelled flight is properly categorized
         cancelled_flight = result[1]
         assert cancelled_flight.flight_status == DelayCategory.CANCELLED
-        assert cancelled_flight.arrival_delay == 0  # Should default for cancelled
+        assert cancelled_flight.arrival_delay == 0
 
-    @patch("httpx.Client.get")
-    def test_get_flights_rate_limit_handling(
-        self, mock_get, mock_settings, mock_logger
-    ):
-        """Test rate limit handling and backoff strategies."""
-        # Mock rate limit response followed by success
-        rate_limit_response = Mock()
-        rate_limit_response.status_code = 429
-        rate_limit_response.json.return_value = {"error": "Rate limit exceeded"}
-
-        success_response = Mock()
-        success_response.status_code = 200
-        success_response.json.return_value = {"data": []}
-
-        mock_get.side_effect = [rate_limit_response, success_response]
-
-        client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
-
-        # Should handle rate limit and eventually succeed
-        result = client.get_flights(params)
-
-        assert mock_get.call_count == 2
-        assert isinstance(result, list)
-
+    @patch("flight_delay_explorer.api.client.time.sleep")
     @patch("httpx.Client.get")
     def test_get_flights_request_response_logging(
-        self, mock_get, mock_settings, mock_logger, sample_api_response
+        self, mock_get, mock_sleep, mock_settings, mock_logger, sample_api_response
     ):
         """Test request/response logging."""
         mock_response = Mock()
@@ -304,3 +326,6 @@ class TestAviationStackClient:
         # Verify logging was called for request/response
         assert mock_logger.info.called
         assert mock_logger.debug.called
+
+        # Verify sleep was not called (since this is a successful request)
+        mock_sleep.assert_not_called()

@@ -1,4 +1,5 @@
 """Entry point for Flight Delay Explorer CLI."""
+
 from flight_delay_explorer import app
 
 

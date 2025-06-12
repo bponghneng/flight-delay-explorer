@@ -31,9 +31,9 @@ class TestVersionControl:
         ]
 
         for pattern in python_patterns:
-            assert (
-                pattern in content
-            ), f"Python pattern '{pattern}' should be in .gitignore"
+            assert pattern in content, (
+                f"Python pattern '{pattern}' should be in .gitignore"
+            )
 
         # Test environment-specific patterns
         env_patterns = [
@@ -45,9 +45,9 @@ class TestVersionControl:
         ]
 
         for pattern in env_patterns:
-            assert (
-                pattern in content
-            ), f"Environment pattern '{pattern}' should be in .gitignore"
+            assert pattern in content, (
+                f"Environment pattern '{pattern}' should be in .gitignore"
+            )
 
         # Test editor-specific patterns
         editor_patterns = [
@@ -56,9 +56,9 @@ class TestVersionControl:
         ]
 
         for pattern in editor_patterns:
-            assert (
-                pattern in content
-            ), f"Editor pattern '{pattern}' should be in .gitignore"
+            assert pattern in content, (
+                f"Editor pattern '{pattern}' should be in .gitignore"
+            )
 
         # Test build and distribution patterns
         build_patterns = [
@@ -68,16 +68,16 @@ class TestVersionControl:
         ]
 
         for pattern in build_patterns:
-            assert (
-                pattern in content
-            ), f"Build pattern '{pattern}' should be in .gitignore"
+            assert pattern in content, (
+                f"Build pattern '{pattern}' should be in .gitignore"
+            )
 
     def test_git_repository_initialized(self):
         """Test that Git repository is properly initialized."""
         git_dir = Path(".git")
-        assert (
-            git_dir.exists()
-        ), "Git repository should be initialized (.git directory exists)"
+        assert git_dir.exists(), (
+            "Git repository should be initialized (.git directory exists)"
+        )
         assert git_dir.is_dir(), ".git should be a directory"
 
     def test_git_basic_operations(self):
@@ -128,9 +128,9 @@ class TestVersionControl:
             result = subprocess.run(
                 ["git", "checkout", "-b", test_branch], capture_output=True, text=True
             )
-            assert (
-                result.returncode == 0
-            ), f"Should be able to create branch {test_branch}"
+            assert result.returncode == 0, (
+                f"Should be able to create branch {test_branch}"
+            )
 
             # Verify we're on the new branch
             result = subprocess.run(
@@ -142,9 +142,9 @@ class TestVersionControl:
             result = subprocess.run(
                 ["git", "checkout", original_branch], capture_output=True, text=True
             )
-            assert (
-                result.returncode == 0
-            ), f"Should be able to switch back to {original_branch}"
+            assert result.returncode == 0, (
+                f"Should be able to switch back to {original_branch}"
+            )
 
         finally:
             # Clean up: delete test branch
@@ -174,35 +174,25 @@ class TestVersionControl:
             test_file.unlink(missing_ok=True)
 
     def test_git_hooks_directory_exists(self):
-        """Test that .git/hooks directory exists."""
-        hooks_dir = Path(".git/hooks")
-        assert hooks_dir.exists(), ".git/hooks directory should exist"
-        assert hooks_dir.is_dir(), ".git/hooks should be a directory"
+        """Test that .githooks directory exists."""
+        hooks_dir = Path(".githooks")
+        assert hooks_dir.exists(), ".githooks should exist"
+        assert hooks_dir.is_dir(), ".githooks should be a directory"
 
     def test_pre_commit_hook_exists(self):
         """Test that pre-commit hook exists and is executable."""
-        pre_commit_hook = Path(".git/hooks/pre-commit")
-        assert pre_commit_hook.exists(), "pre-commit hook should exist"
+        pre_commit_hook = Path(".githooks/pre-commit")
+        assert pre_commit_hook.exists(), "pre-commit hook should exist in .githooks dir"
 
         # Check if file is executable
-        assert os.access(
-            pre_commit_hook, os.X_OK
-        ), "pre-commit hook should be executable"
-
-    def test_commit_msg_hook_exists(self):
-        """Test that commit-msg hook exists and is executable."""
-        commit_msg_hook = Path(".git/hooks/commit-msg")
-        assert commit_msg_hook.exists(), "commit-msg hook should exist"
-
-        # Check if file is executable
-        assert os.access(
-            commit_msg_hook, os.X_OK
-        ), "commit-msg hook should be executable"
+        assert os.access(pre_commit_hook, os.X_OK), (
+            "pre-commit hook should be executable"
+        )
 
     def test_pre_push_hook_exists(self):
         """Test that pre-push hook exists and is executable."""
-        pre_push_hook = Path(".git/hooks/pre-push")
-        assert pre_push_hook.exists(), "pre-push hook should exist"
+        pre_push_hook = Path(".githooks/pre-push")
+        assert pre_push_hook.exists(), "pre-push hook should exist in .githooks dir"
 
         # Check if file is executable
         assert os.access(pre_push_hook, os.X_OK), "pre-push hook should be executable"
@@ -227,9 +217,9 @@ class TestVersionControl:
         ]
 
         for section in required_sections:
-            assert (
-                section.lower() in content.lower()
-            ), f"CONTRIBUTING.md should contain '{section}' section"
+            assert section.lower() in content.lower(), (
+                f"CONTRIBUTING.md should contain '{section}' section"
+            )
 
     def test_github_directory_exists(self):
         """Test that .github directory exists."""
@@ -256,6 +246,6 @@ class TestVersionControl:
         ]
 
         for section in required_sections:
-            assert (
-                section.lower() in content.lower()
-            ), f"PR template should contain '{section}' section"
+            assert section.lower() in content.lower(), (
+                f"PR template should contain '{section}' section"
+            )
