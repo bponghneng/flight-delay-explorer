@@ -1,0 +1,36 @@
+#!/usr/bin/bash
+
+# Pre-push hook to run full test suite and quality checks
+
+set -e
+
+echo "Running pre-push checks..."
+
+# Check if we're in a git repository
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "Error: Not in a git repository"
+    exit 1
+fi
+
+# Check if uv is available
+if ! command -v uv &> /dev/null; then
+    echo "Error: uv is not installed. Please install uv to run development tools."
+    exit 1
+fi
+
+# Install package in development mode
+echo "Installing package in development mode..."
+uv pip install -e .
+
+# Run full test suite with coverage check
+echo "Running full test suite with coverage check..."
+if ! uv run pytest -v --cov=src/flight_delay_explorer --cov-fail-under=90 tests/; then
+    echo "❌ Tests failed or coverage is below 90%. Please fix issues before pushing."
+    exit 1
+fi
+echo "✅ All tests passed and coverage meets requirements"
+
+# Note: Code formatting and linting are handled by pre-commit hooks
+# We only run tests and coverage checks here
+
+echo "🚀 All pre-push checks passed! Ready to push."

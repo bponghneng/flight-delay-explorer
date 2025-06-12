@@ -1,9 +1,9 @@
 # Flight Delay Explorer - Project Milestones
 
 ## 📊 Project Overview
-**Name**: Flight Delay Explorer CLI  
-**Tech Stack**: Python, AviationStack `/v1/flights` API, `pandas`, `matplotlib`, `requests`, `typer`, `datetime`, `pytest`, `pytest-cov`, `black`, `ruff`, `mypy`, local CSV or SQLite  
-**Function**: A command-line tool that queries and summarizes flight delay data for a given flight date. Includes test coverage and logging.  
+**Name**: Flight Delay Explorer CLI
+**Tech Stack**: Python, AviationStack `/v1/flights` API, `pandas`, `matplotlib`, `requests`, `typer`, `datetime`, `pytest`, `pytest-cov`, `black`, `ruff`, `mypy`, local CSV or SQLite
+**Function**: A command-line tool that queries and summarizes flight delay data for a given flight date. Includes test coverage and logging.
 **Demonstrates**: Python fundamentals, CLI tooling, API integration, data parsing and transformation
 
 ---

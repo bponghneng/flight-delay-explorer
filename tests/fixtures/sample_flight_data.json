@@ -11,7 +11,7 @@
       },
       "arrival": {
         "airport": "Los Angeles International",
-        "iata": "LAX", 
+        "iata": "LAX",
         "icao": "KLAX",
         "delay": 25
       },
@@ -32,7 +32,7 @@
       "arrival": {
         "airport": "Denver International",
         "iata": "DEN",
-        "icao": "KDEN", 
+        "icao": "KDEN",
         "delay": null
       },
       "flight": {

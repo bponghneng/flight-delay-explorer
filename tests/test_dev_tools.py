@@ -1,6 +1,7 @@
 """Tests for development tools configuration."""
 
 import configparser
+import sys
 from pathlib import Path
 
 import tomllib
@@ -14,27 +15,6 @@ class TestDevToolsConfiguration:
         pyproject_path = Path("pyproject.toml")
         assert pyproject_path.exists(), "pyproject.toml file should exist"
 
-    def test_black_configuration(self):
-        """Test Black configuration in pyproject.toml."""
-        pyproject_path = Path("pyproject.toml")
-        with pyproject_path.open("rb") as f:
-            config = tomllib.load(f)
-
-        assert "tool" in config, "pyproject.toml should have [tool] section"
-        assert (
-            "black" in config["tool"]
-        ), "pyproject.toml should have [tool.black] section"
-
-        black_config = config["tool"]["black"]
-        assert "line-length" in black_config, "Black config should specify line-length"
-        assert black_config["line-length"] == 88, "Black line-length should be 88"
-        assert (
-            "target-version" in black_config
-        ), "Black config should specify target-version"
-        assert (
-            "py39" in black_config["target-version"]
-        ), "Black should target Python 3.9"
-
     def test_ruff_configuration(self):
         """Test Ruff configuration in pyproject.toml."""
         pyproject_path = Path("pyproject.toml")
@@ -42,15 +22,15 @@ class TestDevToolsConfiguration:
             config = tomllib.load(f)
 
         assert "tool" in config, "pyproject.toml should have [tool] section"
-        assert (
-            "ruff" in config["tool"]
-        ), "pyproject.toml should have [tool.ruff] section"
+        assert "ruff" in config["tool"], (
+            "pyproject.toml should have [tool.ruff] section"
+        )
 
         ruff_config = config["tool"]["ruff"]
         assert "line-length" in ruff_config, "Ruff config should specify line-length"
-        assert (
-            "target-version" in ruff_config
-        ), "Ruff config should specify target-version"
+        assert "target-version" in ruff_config, (
+            "Ruff config should specify target-version"
+        )
 
     def test_mypy_configuration(self):
         """Test MyPy configuration in pyproject.toml."""
@@ -59,15 +39,18 @@ class TestDevToolsConfiguration:
             config = tomllib.load(f)
 
         assert "tool" in config, "pyproject.toml should have [tool] section"
-        assert (
-            "mypy" in config["tool"]
-        ), "pyproject.toml should have [tool.mypy] section"
+        assert "mypy" in config["tool"], (
+            "pyproject.toml should have [tool.mypy] section"
+        )
 
         mypy_config = config["tool"]["mypy"]
+        assert "python_version" in mypy_config, (
+            "MyPy config should specify python_version"
+        )
         assert (
-            "python_version" in mypy_config
-        ), "MyPy config should specify python_version"
-        assert mypy_config["python_version"] == "3.9", "MyPy should target Python 3.9"
+            mypy_config["python_version"]
+            == f"{sys.version_info.major}.{sys.version_info.minor}"
+        ), "MyPy should target current Python version"
         # assert (
         #     mypy_config.get("disallow_untyped_defs") is True
         # ), "MyPy should disallow untyped defs"
@@ -85,17 +68,17 @@ class TestDevToolsConfiguration:
             config = tomllib.load(f)
 
         assert "tool" in config, "pyproject.toml should have [tool] section"
-        assert (
-            "pytest" in config["tool"]
-        ), "pyproject.toml should have [tool.pytest] section"
+        assert "pytest" in config["tool"], (
+            "pyproject.toml should have [tool.pytest] section"
+        )
 
         pytest_config = config["tool"]["pytest"]
         if "ini_options" in pytest_config:
             ini_options = pytest_config["ini_options"]
             assert "testpaths" in ini_options, "Pytest config should specify testpaths"
-            assert (
-                "tests" in ini_options["testpaths"]
-            ), "Pytest should look in tests directory"
+            assert "tests" in ini_options["testpaths"], (
+                "Pytest should look in tests directory"
+            )
 
     def test_coveragerc_exists(self):
         """Test that .coveragerc exists."""
@@ -113,30 +96,25 @@ class TestDevToolsConfiguration:
 
         run_section = config["run"]
         assert "source" in run_section, "[run] section should specify source"
-        assert (
-            "src/flight_delay_explorer" in run_section["source"]
-        ), "Source should include package path"
+        assert "src/flight_delay_explorer" in run_section["source"], (
+            "Source should include package path"
+        )
 
         report_section = config["report"]
-        assert (
-            "fail_under" in report_section
-        ), "[report] section should specify fail_under"
+        assert "fail_under" in report_section, (
+            "[report] section should specify fail_under"
+        )
         fail_under = int(report_section["fail_under"])
         assert fail_under >= 90, "Coverage should fail under 90%"
 
     def test_tool_integration(self):
-        """Test that tools work together without conflicts."""
-        # This test ensures Black formatting doesn't break Ruff rules
-        # and that configuration files are compatible
+        """Test that Ruff configuration is valid."""
+        # This test ensures Ruff configuration is properly set up
         pyproject_path = Path("pyproject.toml")
         with pyproject_path.open("rb") as f:
             config = tomllib.load(f)
 
-        # Check that Black and Ruff line-length settings are compatible
-        black_config = config.get("tool", {}).get("black", {})
+        # Check that Ruff configuration is present and valid
         ruff_config = config.get("tool", {}).get("ruff", {})
-
-        if "line-length" in black_config and "line-length" in ruff_config:
-            assert (
-                black_config["line-length"] == ruff_config["line-length"]
-            ), "Black and Ruff line-length should match"
+        assert ruff_config, "Ruff configuration should be present"
+        assert "line-length" in ruff_config, "Ruff should specify line-length"

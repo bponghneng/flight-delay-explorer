@@ -35,17 +35,33 @@ Thank you for your interest in contributing to Flight Delay Explorer! This docum
 
 This project uses `uv` for dependency management and includes several development tools:
 
-- **Black**: Code formatting
-- **Ruff**: Linting and import sorting
+- **Ruff**: Code formatting and linting
 - **MyPy**: Type checking
 - **Pytest**: Testing framework
 - **Coverage**: Test coverage reporting
+
+### Git Hooks
+
+This project uses custom Git hooks located in the `.githooks/` directory:
+
+- **pre-commit**: Runs code quality checks including Ruff linting/formatting, MyPy type checking, file integrity checks, merge conflict detection, and debug statement detection
+- **pre-push**: Installs the package in development mode and runs the full test suite with coverage checks
+
+#### Activating Git Hooks
+
+After cloning the repository, you must run the following command once to configure Git to use the custom hooks directory:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This step is necessary for the hooks to run automatically when you commit or push code, ensuring code quality standards are maintained.
 
 ### Running Development Tools
 
 ```bash
 # Format code
-uv run black src tests
+uv run ruff format src tests
 
 # Run linter
 uv run ruff check src tests
@@ -105,10 +121,10 @@ Use descriptive, kebab-case branch names:
 
 ## Commit Message Format
 
-We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+We follow a simplified version of the [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
 ```
-<type>(scope): <description>
+<type>: <description>
 
 [optional body]
 
@@ -130,23 +146,13 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 ### Examples
 
 ```bash
-feat(cli): add flight delay filtering option
-fix(api): handle timeout errors in API client
+feat: add flight delay filtering option
+fix: handle timeout errors in API client
 docs: update README with installation instructions
-test(parser): add tests for edge case handling
-refactor(models): simplify flight record structure
-chore(deps): update dependencies to latest versions
+test: add tests for edge case handling
+refactor: simplify flight record structure
+chore: update dependencies to latest versions
 ```
-
-### Scope (Optional)
-
-The scope should be the name of the package/module affected:
-- `cli`
-- `api`
-- `parser`
-- `models`
-- `config`
-- `utils`
 
 ## Pull Request Process
 
@@ -160,7 +166,7 @@ The scope should be the name of the package/module affected:
 
 2. **Run all quality checks** locally:
    ```bash
-   uv run black src tests
+   uv run ruff format src tests
    uv run ruff check src tests --fix
    uv run mypy src tests
    uv run pytest --cov=src/flight_delay_explorer tests/
@@ -178,7 +184,7 @@ The scope should be the name of the package/module affected:
 
 - [ ] All tests pass
 - [ ] Code coverage is at least 90%
-- [ ] Code follows formatting standards (Black)
+- [ ] Code follows formatting standards (Ruff)
 - [ ] No linting errors (Ruff)
 - [ ] Type checking passes (MyPy)
 - [ ] PR description explains the changes
@@ -216,10 +222,10 @@ The scope should be the name of the package/module affected:
 def test_should_do_something_when_condition():
     # Arrange
     setup_test_data()
-    
+
     # Act
     result = function_under_test()
-    
+
     # Assert
     assert result == expected_value
 ```

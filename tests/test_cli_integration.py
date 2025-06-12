@@ -16,7 +16,7 @@ from flight_delay_explorer.models import DelayCategory, FlightRecord
 @pytest.fixture
 def mock_settings():
     """Create mock settings for testing."""
-    return Settings(
+    return Settings.for_testing(
         access_key="test-api-key",
         base_url="https://api.aviationstack.com/v1",
         max_retries=3,
@@ -142,7 +142,7 @@ class TestCLIIntegration:
         mock_client.get_flights.return_value = expected_records
 
         # Set environment variable for API key
-        with patch.dict(os.environ, {"FLIGHT_ACCESS_KEY": "test-key"}):
+        with patch.dict(os.environ, {"AVIATIONSTACK_ACCESS_KEY": "test-key"}):
             result = runner.invoke(app, ["--flight-date", "2024-01-01"])
 
         # Verify command executed successfully
@@ -185,7 +185,7 @@ class TestCLIIntegration:
         )
 
         # Set environment variable for API key
-        with patch.dict(os.environ, {"FLIGHT_ACCESS_KEY": "invalid-key"}):
+        with patch.dict(os.environ, {"AVIATIONSTACK_ACCESS_KEY": "invalid-key"}):
             result = runner.invoke(app, ["--flight-date", "2024-01-01"])
 
         # Should fail with authentication error
@@ -215,7 +215,7 @@ class TestCLIIntegration:
         mock_client.get_flights.side_effect = httpx.ConnectError("Connection failed")
 
         # Set environment variable for API key
-        with patch.dict(os.environ, {"FLIGHT_ACCESS_KEY": "test-key"}):
+        with patch.dict(os.environ, {"AVIATIONSTACK_ACCESS_KEY": "test-key"}):
             result = runner.invoke(app, ["--flight-date", "2024-01-01"])
 
         # Should fail with network error
@@ -245,7 +245,7 @@ class TestCLIIntegration:
         )
 
         # Set environment variable for API key
-        with patch.dict(os.environ, {"FLIGHT_ACCESS_KEY": "test-key"}):
+        with patch.dict(os.environ, {"AVIATIONSTACK_ACCESS_KEY": "test-key"}):
             result = runner.invoke(app, ["--flight-date", "2024-01-01"])
 
         # Should fail with rate limit error
@@ -271,7 +271,7 @@ class TestCLIIntegration:
         mock_client.get_flights.side_effect = ValueError("Invalid response format")
 
         # Set environment variable for API key
-        with patch.dict(os.environ, {"FLIGHT_ACCESS_KEY": "test-key"}):
+        with patch.dict(os.environ, {"AVIATIONSTACK_ACCESS_KEY": "test-key"}):
             result = runner.invoke(app, ["--flight-date", "2024-01-01"])
 
         # Should fail with parsing error
@@ -289,9 +289,8 @@ class TestCLIIntegration:
         with (
             patch("flight_delay_explorer.cli.AviationStackClient") as mock_client_class,
             patch("flight_delay_explorer.cli.Settings") as mock_settings_class,
-            patch.dict(os.environ, {"FLIGHT_ACCESS_KEY": "test-key"}),
+            patch.dict(os.environ, {"AVIATIONSTACK_ACCESS_KEY": "test-key"}),
         ):
-
             mock_settings = Mock()
             mock_settings_class.return_value = mock_settings
 
@@ -397,7 +396,7 @@ class TestCLIIntegration:
         mock_client.get_flights.return_value = test_records
 
         # Set environment variable for API key
-        with patch.dict(os.environ, {"FLIGHT_ACCESS_KEY": "test-key"}):
+        with patch.dict(os.environ, {"AVIATIONSTACK_ACCESS_KEY": "test-key"}):
             result = runner.invoke(app, ["--flight-date", "2024-01-01"])
 
         # Verify command executed successfully
@@ -463,7 +462,7 @@ class TestCLIIntegration:
         mock_client.get_flights.return_value = large_record_set
 
         # Set environment variable for API key
-        with patch.dict(os.environ, {"FLIGHT_ACCESS_KEY": "test-key"}):
+        with patch.dict(os.environ, {"AVIATIONSTACK_ACCESS_KEY": "test-key"}):
             result = runner.invoke(app, ["--flight-date", "2024-01-01"])
 
         # Verify command executed successfully
@@ -475,17 +474,31 @@ class TestCLIIntegration:
         assert "TEST049" in result.stdout  # Last record
 
     def test_fetch_command_configuration_missing_api_key(self):
-        """Test error handling when API key is missing."""
+        """Test behavior with default API key."""
         runner = CliRunner()
 
-        # Clear environment variables
-        with patch.dict(os.environ, {}, clear=True):
-            result = runner.invoke(app, ["--flight-date", "2024-01-01"])
+        # Mock the API client to avoid real network calls
+        with patch(
+            "flight_delay_explorer.cli.AviationStackClient"
+        ) as mock_client_class:
+            # Set up the mock to return sample data
+            mock_instance = mock_client_class.return_value
+            mock_instance.get_flights.return_value = [
+                FlightRecord(
+                    flight_date="2024-01-01",
+                    arrival_delay=15,
+                    destination_icao="LAX",
+                    flight_icao="TEST123",
+                    flight_status=DelayCategory.MINOR_DELAY,
+                    origin_icao="JFK",
+                )
+            ]
 
-        # Should fail due to missing API key
-        assert result.exit_code != 0
-        assert (
-            "required" in result.stdout.lower()
-            or "api" in result.stdout.lower()
-            or "key" in result.stdout.lower()
-        )
+            # Clear environment variables
+            with patch.dict(os.environ, {}, clear=True):
+                result = runner.invoke(app, ["--flight-date", "2024-01-01"])
+
+            # Should succeed with default API key
+            assert result.exit_code == 0
+            # Check that some output is generated
+            assert "flight" in result.stdout.lower() or "data" in result.stdout.lower()

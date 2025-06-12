@@ -13,9 +13,8 @@ This is an early-stage project focused on learning Python fundamentals, CLI tool
 **Package Management**: This project uses `uv` for dependency management.
 
 **Code Quality Tools**:
-- `ruff check` - Run linting 
-- `ruff format` - Format code (alternative to black)
-- `black .` - Format code with Black
+- `ruff check` - Run linting
+- `ruff format` - Format code
 - `mypy src/` - Run type checking
 - `pytest` - Run test suite
 - `pytest --cov=flight_delay_explorer` - Run tests with coverage
@@ -33,7 +32,7 @@ This is an early-stage project focused on learning Python fundamentals, CLI tool
 - `api_client.py` - BTS API integration using requests
 - `data_parser.py` - pandas-based data processing
 - `models.py` - Data structures and classes
-- `utils.py` - Helper functions  
+- `utils.py` - Helper functions
 - `config.py` - Configuration management
 
 **Key Dependencies**:
@@ -54,7 +53,7 @@ The tool is designed to work with Bureau of Transportation Statistics (BTS) flig
 
 Uses pytest with coverage reporting. Tests should include:
 - Unit tests for individual modules
-- Integration tests for API interactions  
+- Integration tests for API interactions
 - Mock objects for external dependencies
 - Fixture management for test data
 
