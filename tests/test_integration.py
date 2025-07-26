@@ -135,7 +135,14 @@ class TestEndToEndIntegration:
             "os.environ", {"AVIATIONSTACK_ACCESS_KEY": "test-key-e2e"}, clear=True
         ):
             result = runner.invoke(
-                app, ["--flight-date", "2024-01-15", "--log-level", "DEBUG"]
+                app,
+                [
+                    "--flight-date",
+                    "2024-01-15",
+                    "--log-level",
+                    "DEBUG",
+                    "--no-cache",
+                ],
             )
 
         # Verify successful execution

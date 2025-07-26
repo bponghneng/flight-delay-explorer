@@ -52,14 +52,6 @@ class TestFlightRecord:
 
     def test_flight_record_type_annotations(self):
         """Test that FlightRecord has proper type annotations."""
-        import inspect
-
-        signature = inspect.signature(FlightRecord.__init__)
-        params = signature.parameters
-
-        # Skip 'self' parameter
-        field_params = {name: param for name, param in params.items() if name != "self"}
-
         # Check that fields exist
         expected_fields = {
             "arrival_delay",
@@ -69,7 +61,11 @@ class TestFlightRecord:
             "flight_status",
             "origin_icao",
         }
-        assert set(field_params.keys()) == expected_fields
+        assert set(FlightRecord.model_fields.keys()) == expected_fields
+
+        # Check annotations (example)
+        assert FlightRecord.model_fields["arrival_delay"].annotation == int
+        assert FlightRecord.model_fields["flight_status"].annotation == DelayCategory
 
     def test_flight_record_with_cancelled_status(self):
         """Test FlightRecord with cancelled status."""

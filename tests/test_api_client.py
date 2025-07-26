@@ -1,10 +1,13 @@
 """Tests for API client."""
 
 import logging
+import sys
 from unittest.mock import Mock, patch
 
 import httpx
 import pytest
+
+print(sys.path)
 
 from flight_delay_explorer.api.client import AviationStackClient
 from flight_delay_explorer.config import Settings
@@ -101,7 +104,7 @@ class TestAviationStackClient:
         mock_get.return_value = mock_response
 
         client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
+        params = QueryParams(flight_date="2024-01-01", no_cache=True)
 
         result = client.get_flights(params)
 
@@ -125,6 +128,63 @@ class TestAviationStackClient:
         assert first_record.arrival_delay == 25
         assert first_record.flight_status == DelayCategory.MINOR_DELAY
 
+    @patch("flight_delay_explorer.api.client.save_to_cache")
+    @patch("flight_delay_explorer.api.client.load_from_cache")
+    @patch("httpx.Client.get")
+    def test_get_flights_caching(
+        self,
+        mock_get,
+        mock_load_from_cache,
+        mock_save_to_cache,
+        mock_settings,
+        mock_logger,
+        sample_api_response,
+    ):
+        """Test caching logic in get_flights."""
+        # Mock successful HTTP response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = sample_api_response
+        mock_get.return_value = mock_response
+
+        client = AviationStackClient(mock_settings, mock_logger)
+        params = QueryParams(flight_date="2024-01-01")
+
+        # 1. Test cache miss (API call should be made)
+        mock_load_from_cache.return_value = None
+        result1 = client.get_flights(params)
+
+        mock_load_from_cache.assert_called_once()
+        mock_get.assert_called_once()
+        mock_save_to_cache.assert_called_once()
+        assert len(result1) == 2
+
+        # 2. Test cache hit (API call should not be made)
+        mock_load_from_cache.return_value = result1  # Simulate cache hit
+        mock_get.reset_mock()
+        mock_save_to_cache.reset_mock()
+
+        result2 = client.get_flights(params)
+
+        mock_load_from_cache.assert_called_with(
+            "a36567ac21e87ab661bc9b8fd088055f", mock_logger
+        )
+        mock_get.assert_not_called()
+        mock_save_to_cache.assert_not_called()
+        assert result2 == result1
+
+        # 3. Test with no_cache=True (should bypass cache)
+        params_no_cache = QueryParams(flight_date="2024-01-01", no_cache=True)
+        mock_load_from_cache.reset_mock()
+        mock_get.reset_mock()
+        mock_save_to_cache.reset_mock()
+
+        client.get_flights(params_no_cache)
+
+        mock_load_from_cache.assert_not_called()
+        mock_get.assert_called_once()
+        mock_save_to_cache.assert_not_called()
+
     @patch("flight_delay_explorer.api.client.time.sleep")
     @patch("httpx.Client.get")
     def test_get_flights_http_error_handling(
@@ -137,7 +197,7 @@ class TestAviationStackClient:
         )
 
         client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
+        params = QueryParams(flight_date="2024-01-01", no_cache=True)
 
         with pytest.raises(httpx.HTTPStatusError):
             client.get_flights(params)
@@ -155,7 +215,7 @@ class TestAviationStackClient:
         mock_get.side_effect = httpx.ConnectError("Connection failed")
 
         client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
+        params = QueryParams(flight_date="2024-01-01", no_cache=True)
 
         with pytest.raises(httpx.ConnectError):
             client.get_flights(params)
@@ -181,7 +241,7 @@ class TestAviationStackClient:
         ]
 
         client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
+        params = QueryParams(flight_date="2024-01-01", no_cache=True)
 
         result = client.get_flights(params)
 
@@ -204,7 +264,7 @@ class TestAviationStackClient:
         mock_get.side_effect = httpx.ConnectError("Persistent failure")
 
         client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
+        params = QueryParams(flight_date="2024-01-01", no_cache=True)
 
         with pytest.raises(httpx.ConnectError):
             client.get_flights(params)
@@ -236,7 +296,7 @@ class TestAviationStackClient:
         mock_get.side_effect = [rate_limit_response, success_response]
 
         client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
+        params = QueryParams(flight_date="2024-01-01", no_cache=True)
 
         # Should handle rate limit and eventually succeed
         result = client.get_flights(params)
@@ -258,7 +318,7 @@ class TestAviationStackClient:
         mock_get.return_value = mock_response
 
         client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
+        params = QueryParams(flight_date="2024-01-01", no_cache=True)
 
         client.get_flights(params)
 
@@ -275,7 +335,7 @@ class TestAviationStackClient:
         mock_get.return_value = mock_response
 
         client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
+        params = QueryParams(flight_date="2024-01-01", no_cache=True)
 
         client.get_flights(params)
 
@@ -295,7 +355,7 @@ class TestAviationStackClient:
         mock_get.return_value = mock_response
 
         client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
+        params = QueryParams(flight_date="2024-01-01", no_cache=True)
 
         result = client.get_flights(params)
 
@@ -319,7 +379,7 @@ class TestAviationStackClient:
         mock_get.return_value = mock_response
 
         client = AviationStackClient(mock_settings, mock_logger)
-        params = QueryParams(flight_date="2024-01-01")
+        params = QueryParams(flight_date="2024-01-01", no_cache=True)
 
         client.get_flights(params)
 

@@ -213,3 +213,5 @@ tmp/
 *.key
 *.pem
 secrets.json
+
+install.sh

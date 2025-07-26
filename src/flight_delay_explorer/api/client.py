@@ -6,6 +6,7 @@ from typing import Any, Optional, Union
 
 import httpx
 
+from ..cache import get_cache_key, load_from_cache, save_to_cache
 from ..config import Settings
 from ..models import DelayCategory, FlightRecord, QueryParams
 from ..utils.logging import setup_logger
@@ -46,6 +47,13 @@ class AviationStackClient:
             "min_delay_arr": 1,
         }
 
+        cache_key = get_cache_key(query_params)
+        if (
+            not params.no_cache
+            and (cached_data := load_from_cache(cache_key, self._logger)) is not None
+        ):
+            return cached_data
+
         self._logger.info(f"Fetching flights for date: {params.flight_date}")
         self._logger.debug(f"API URL: {url}")
 
@@ -73,7 +81,10 @@ class AviationStackClient:
                     self._logger.info(f"API request success: {count} records received")
                     self._logger.debug(f"Response status: {response.status_code}")
 
-                    return self._parse_response(data)
+                    records = self._parse_response(data)
+                    if not params.no_cache:
+                        save_to_cache(cache_key, records, self._logger)
+                    return records
 
             except httpx.HTTPStatusError as e:
                 self._logger.error(f"HTTP error on attempt {attempt + 1}: {e}")

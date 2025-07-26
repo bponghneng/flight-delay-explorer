@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from enum import Enum
 
+from pydantic import BaseModel
+
 
 class DelayCategory(Enum):
     """Flight delay categories."""
@@ -15,8 +17,7 @@ class DelayCategory(Enum):
     SEVERE_DELAY = "severe delay"
 
 
-@dataclass
-class FlightRecord:
+class FlightRecord(BaseModel):
     """Represents a single flight record with delay information."""
 
     arrival_delay: int
@@ -32,3 +33,4 @@ class QueryParams:
     """Parameters for querying flight data."""
 
     flight_date: str
+    no_cache: bool = False

@@ -38,6 +38,9 @@ def fetch(
     show_progress: bool = typer.Option(
         True, "--show-progress/--no-progress", help="Show progress indicators"
     ),
+    no_cache: bool = typer.Option(
+        False, "--no-cache", help="Disable caching for this request"
+    ),
 ) -> None:
     """Fetch flight delay data for a specific date."""
     # Set up logging
@@ -73,7 +76,7 @@ def fetch(
 
     # Initialize API client
     api_client = AviationStackClient(settings, logger)
-    query_params = QueryParams(flight_date=flight_date)
+    query_params = QueryParams(flight_date=flight_date, no_cache=no_cache)
 
     # Fetch data with progress indicator
     flight_records: list[FlightRecord] = []
