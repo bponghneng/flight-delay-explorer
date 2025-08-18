@@ -213,3 +213,10 @@ tmp/
 *.key
 *.pem
 secrets.json
+
+# AI coding assistant files
+.claude
+.serena
+CLAUDE.md
+GEMINI.md
+WARP.md
